@@ -20,19 +20,15 @@ tini = 0
 tend = 20
 t = 0
 xini = rand(2,N)
-vini = 2.5
+vini = 50
 
 x = np.vstack([l[0]+rand(1,N)*(u[0]-l[0]), 
                l[1]+rand(1,N)*(u[1]-l[1])])
 
 v = 2*(rand(2,N)-0.5)*vini
 
-part = list("spring" = K, "radius" = r)
-box = list(l_1,l_2,u_1,u_2)
 
-
-
-for  m in range(100):
+for  m in range(500):
     F = np.zeros((2,N))
     for i in range(N):
         for j in range(i+1, N):
@@ -51,6 +47,7 @@ for  m in range(100):
         f_up = max(0, r + x[1,i] - 10*np.sqrt(N))
         F_C = K*np.array([f_left - f_right, f_bot - f_up])
         F[:,i] += F_C
+        print(F)
     x_new = x + h*v + (h**2)*F
     v_new =(x_new - x)/h
     v = v_new
@@ -60,8 +57,8 @@ for  m in range(100):
         [l[1],l[1],u[1],u[1],l[1]])
     plt.plot(x[0,:],x[1,:],".")
     plt.pause(0.01)
+    plt.xlim(0,10*np.sqrt(N))
+    plt.ylim(0,10*np.sqrt(N))
     plt.clf()
-
-plt.show
 
 plt.show
