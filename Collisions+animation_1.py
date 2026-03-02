@@ -20,7 +20,7 @@ tini = 0
 tend = 20
 t = 0
 xini = rand(2,N)
-vini = 5
+vini = 2.5
 
 x = np.vstack([l[0]+rand(1,N)*(u[0]-l[0]), 
                l[1]+rand(1,N)*(u[1]-l[1])])
