@@ -27,11 +27,6 @@ x = np.vstack([l[0]+rand(1,N)*(u[0]-l[0]),
 
 v = 2*(rand(2,N)-0.5)*vini
 
-part = list("spring" = K, "radius" = r)
-box = list(l_1,l_2,u_1,u_2)
-
-
-
 while t < tend:
     F = np.zeros((2,N))
     for i in range(N):
