@@ -45,7 +45,7 @@ def SimulationStep(p,v,h=hbase,r=rbase,k=k,box=box,g=g): # time-step function
                 anow=a(p[pm],p[pnotm])
                 f[pm,0] = k*(2*r-dnow)*math.cos(anow) # set new force, replacing zeros
                 f[pm,1] = k*(2*r-dnow)*math.sin(anow)
-                f[pnotm,0] = -f[pm,0]
+                f[pnotm,0] = -f[pm,0] # Newton's third law
                 f[pnotm,1] = -f[pm,1]
             else:
                 continue
@@ -58,10 +58,12 @@ def SimulationStep(p,v,h=hbase,r=rbase,k=k,box=box,g=g): # time-step function
         f[pm]=np.add(f[pm],fwall[0]) # add wall force on point pm to current force (probably 0)
         
         # gravity calculation goes here
+    
     pnew = np.add(p, h*v) # use verlet formula with the 2 arrays position, velocity. np.add only takes 2 arrays and i couldn't figure out a smoother solution.
     pnew = np.add(pnew, h**2*f) # add in forces
     v = (np.subtract(pnew, p))/h # velocity=displacement/time
     p = pnew
+    print(f)
     return(p,v)
 
 #Plotting stuff
