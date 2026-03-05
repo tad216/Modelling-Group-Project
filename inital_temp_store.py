@@ -117,10 +117,10 @@ for n in range(npartbase):
     colours.append([r.random(),r.random(),r.random(),1])
 
 
-Temp = np.zeros(npartbase)
+Temp = np.zeros(npartbase) #Zero array of size N
 
 
-def wall_coll(i, p,part,npart): 
+def wall_coll(i, p,part,npart): #Collisions with the wall function
     f_left = max(0,part["radius"] - p[i,0])
     f_right = max(0,part["radius"]+ p[i,0] - 10*np.sqrt(npart))
     f_bot = max(0,part["radius"]- p[i,1])
@@ -128,7 +128,9 @@ def wall_coll(i, p,part,npart):
     F_C = part["spring"]*np.array([f_left - f_right, f_bot - f_up])
     return F_C
 
-def particle_coll(i,j,p,part,npart):
+
+
+def particle_coll(i,j,p,part,npart):  #Collisions with other particles function
     force = np.array([0,0])
     if i!=j:
         d = np.sqrt((p[i,0]-p[j,0])**2 +(p[i,1]-p[j,1])**2)
@@ -168,6 +170,7 @@ def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,n
         plistvelnew[i,:]=([vxnew,vynew])
     """
     F = np.zeros((npart,2))
+    Temp = np.zeros(npart)
     for i in range(npart):
         for j in range(i+1, npart):
             force = particle_coll(i,j,p,part,npart)
@@ -175,16 +178,16 @@ def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,n
             F[j,:] += -force
         F_C = wall_coll(i,p,part,npart)
         F[i,:] += F_C
-    #print("Forces",F)
+    #print("Forces",F) 
         
     pnew = p + h*v + (h**2)*F
     vnew =(pnew - p)/h
     for i in range(npart):
         Temp[i] = 0.5*np.sum(vnew[i,:]**2)
     mean_temp = (1/npart)*np.sum(Temp)
-    print("Temp:", Temp, "Mean Temperature:", mean_temp)
+    #print("Temp:", Temp, "Mean Temperature:", mean_temp)
 
-    return(pnew,vnew)
+    return(pnew,vnew, Temp, mean_temp)
 
 plt.ion()
 fig=plt.figure()
@@ -197,7 +200,7 @@ vnext=plistvelbase
 input("press enter")
 
 for b in range(200):
-    xnext,vnext=SimulationStep(xnext,vnext)
+    xnext,vnext, Temp, mean_temp=SimulationStep(xnext,vnext)
     #print(xnext[0][0])
     #plpts.set_offsets(xnext)
     #plt.pause(0.01)
@@ -205,6 +208,9 @@ for b in range(200):
 print(xnext)
 input("Press enter")
 
+
+
+#not the complete thing, update if you can
 pmax = 4
 N = 4**pmax
 n_t = 100
