@@ -117,8 +117,29 @@ for n in range(npartbase):
     colours.append([r.random(),r.random(),r.random(),1])
 
 
-Temp = np.zeros([1,npartbase])
-    
+Temp = np.zeros(npartbase)
+
+
+def wall_coll(i, p,part,npart): 
+    f_left = max(0,part["radius"] - p[i,0])
+    f_right = max(0,part["radius"]+ p[i,0] - 10*np.sqrt(npart))
+    f_bot = max(0,part["radius"]- p[i,1])
+    f_up = max(0, part["radius"] + p[i,1] - 10*np.sqrt(npart))
+    F_C = part["spring"]*np.array([f_left - f_right, f_bot - f_up])
+    return F_C
+
+def particle_coll(i,j,p,part,npart):
+    force = np.array([0,0])
+    if i!=j:
+        d = np.sqrt((p[i,0]-p[j,0])**2 +(p[i,1]-p[j,1])**2)
+        alpha = np.arctan2(p[i,1]-p[j,1],p[i,0]-p[j,0])
+    else:
+        d = 0
+    if 0 < d < 2*part["radius"]:
+        force = part["spring"]*(2*part["radius"] - d)*np.array([np.cos(alpha),np.sin(alpha)])
+    return force
+
+
 #print(plistposbase,plistvelbase)
 
 def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,npart=npartbase):
@@ -149,27 +170,17 @@ def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,n
     F = np.zeros((npart,2))
     for i in range(npart):
         for j in range(i+1, npart):
-            if i!=j:
-                d = np.sqrt((p[i,0]-p[j,0])**2 +(p[i,1]-p[j,1])**2)
-                alpha = np.arctan2(p[i,1]-p[j,1],p[i,0]-p[j,0])
-            else:
-                 d = 0
-            if 0 < d < 2*part["radius"]:
-                 force = part["spring"]*(2*part["radius"] - d)*np.array([np.cos(alpha),np.sin(alpha)])
-                 F[i,:] += force
-                 F[j,:] += -force
-        f_left = max(0,part["radius"] - p[i,0])
-        f_right = max(0,part["radius"]+ p[i,0] - 10*np.sqrt(npart))
-        f_bot = max(0,part["radius"]- p[i,1])
-        f_up = max(0, part["radius"] + p[i,1] - 10*np.sqrt(npart))
-        F_C = part["spring"]*np.array([f_left - f_right, f_bot - f_up])
+            force = particle_coll(i,j,p,part,npart)
+            F[i,:] += force
+            F[j,:] += -force
+        F_C = wall_coll(i,p,part,npart)
         F[i,:] += F_C
-        #print(F)
+    #print("Forces",F)
         
     pnew = p + h*v + (h**2)*F
     vnew =(pnew - p)/h
-    
-    Temp[0,:] = 0.5*np.sum(vnew**2, axis=1)
+    for i in range(npart):
+        Temp[i] = 0.5*np.sum(vnew[i,:]**2)
     mean_temp = (1/npart)*np.sum(Temp)
     print("Temp:", Temp, "Mean Temperature:", mean_temp)
 
