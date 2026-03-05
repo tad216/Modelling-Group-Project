@@ -204,3 +204,23 @@ for b in range(200):
     #plt.show()
 print(xnext)
 input("Press enter")
+
+pmax = 4
+N = 4**pmax
+n_t = 100
+nrec = int(n_t/2)
+stand_dev = []
+for j in range(pmax):
+    vini = 2.5
+    p = np.random.rand(N,2)
+    v = 2*(np.random.rand(N,2)-0.5)*vini
+    Temp_vals = []
+    for e in range(n_t):
+        p,v,Temp, mean_temp = SimulationStep(p = p, v =v, h=hbase, part = partbase, g=gbase , npart = N)
+        Temp_vals.append(mean_temp)
+    sd = np.std(Temp_vals[-nrec-1:])
+    stand_dev.append(sd)
+        
+    print("standard deviation", sd)
+
+print("Standard Dev", stand_dev)
