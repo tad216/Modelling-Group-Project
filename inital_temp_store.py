@@ -1,3 +1,4 @@
+# Import Functions
 import numpy as np
 import random as r
 import math as m
@@ -5,19 +6,22 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import time as t
 
-npartbase=16
-hbase=0.01
-gbase=0
-boxbase=10*(npartbase**0.5)
-plistposbase=[]
-plistvelbase=[]
+# Set up parameters
+npartbase=16 #Number of particles
+hbase=0.01 # Timestep
+gbase=0 #
+boxbase=10*(npartbase**0.5) #Boc size
+plistposbase=[] # Positions
+plistvelbase=[] # Velocity
+#Dictionary for constants
 partbase={
 
     "spring":250,
     "radius":1
 }
-plistposbase=np.zeros((npartbase,2))
-plistvelbase=np.zeros((npartbase,2))
+plistposbase=np.zeros((npartbase,2)) # Empty position
+plistvelbase=np.zeros((npartbase,2)) # Empty velocity
+#Initial seed for testing code, 30 particles
 """
 plistposbase=np.array([[32.77212199,28.37445098],
  [55.68867184,57.80481431],
@@ -110,8 +114,9 @@ for n in range(npartbase):
         plistposbase[n,1]=partbase["radius"]+plistposbase[n,1]
     elif (plistposbase[n,1]>boxbase-partbase["radius"]):
         plistposbase[n,1]=plistposbase[n,1]-partbase["radius"]
-    plistvelbase[n,:]=([(r.random()-0.5)*2.5,(r.random()-0.5)*2.5])
+    plistvelbase[n,:]=([(r.random()-0.5)*2.5,(r.random()-0.5)*2.5]) # Initial Velocities (Originally 2.5)
 
+# Give each particle a unique colour
 colours=[]
 for n in range(npartbase):
     colours.append([r.random(),r.random(),r.random(),1])
@@ -179,9 +184,10 @@ def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,n
         F_C = wall_coll(i,p,part,npart)
         F[i,:] += F_C
     #print("Forces",F) 
-        
+    # verlet updating formula 
     pnew = p + h*v + (h**2)*F
     vnew =(pnew - p)/h
+    # Temperature
     for i in range(npart):
         Temp[i] = 0.5*np.sum(vnew[i,:]**2)
     mean_temp = (1/npart)*np.sum(Temp)
@@ -189,6 +195,7 @@ def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,n
 
     return(pnew,vnew, Temp, mean_temp)
 
+# Create box for particles
 plt.ion()
 fig=plt.figure()
 ax=fig.add_subplot(111)
@@ -199,6 +206,7 @@ xnext=plistposbase
 vnext=plistvelbase
 input("press enter")
 
+# Animation Loop
 for b in range(200):
     xnext,vnext, Temp, mean_temp=SimulationStep(xnext,vnext)
     #print(xnext[0][0])
@@ -206,6 +214,7 @@ for b in range(200):
     #plt.pause(0.01)
     #plt.show()
 print(xnext)
+# Imput to space out code
 input("Press enter")
 
 
