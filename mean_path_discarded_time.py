@@ -246,7 +246,7 @@ xnext=plistposbase
 vnext=plistvelbase
 input("press enter")
 
-n_t = 10000
+n_t = 1000
 n_rec = int(n_t/2)
 
 # Animation Loop
