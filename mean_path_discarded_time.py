@@ -9,7 +9,7 @@ import time as t
 # Set up parameters
 npartbase=32 #Number of particles
 hbase=0.01 # Timestep
-gbase=0 #
+gbase=0 #Gravity (positive values increase gravity)
 boxbase=10*(npartbase**0.5) #Boc size
 plistposbase=[] # Positions
 plistvelbase=[] # Velocity
@@ -108,6 +108,7 @@ def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,n
             F[j,:] += -force
         F_C = wall_coll(i,p,part,npart)
         F[i,:] += F_C
+        F[i,1] += -g
     #print("Forces",F) 
     # verlet updating formula 
     pnew = p + h*v + (h**2)*F
