@@ -10,7 +10,7 @@ import time as t
 npartbase=32 #Number of particles
 hbase=0.01 # Timestep
 gbase=0 #Gravity (positive values increase gravity)
-boxbase=10*(npartbase**0.5) #Boc size
+boxbase=10*(npartbase**0.5) #Box size
 plistposbase=[] # Positions
 plistvelbase=[] # Velocity
 #Dictionary for constants
@@ -34,13 +34,18 @@ for n in range(npartbase):
         plistposbase[n,1]=plistposbase[n,1]-partbase["radius"]
     plistvelbase[n,:]=([(r.random()-0.5)*2.5,(r.random()-0.5)*2.5]) # Initial Velocities (Originally 2.5)
 
+l = np.array([0,0]) #Coordinates of the bottom left corner of the box
+u = np.array([boxbase,boxbase]) #Coordinates of the top right corner of the box
+
+densbase = npartbase/((u[0,0]-l[0,0])*(u[0,1]-l[0,1])) #Density of particles
+
 # Give each particle a unique colour
 colours=[]
 for n in range(npartbase):
     colours.append([r.random(),r.random(),r.random(),1])
 
 
-Temp = np.zeros(npartbase) #Zero Temperature Array
+Temp = np.zeros(npartbase) #Empty Temperature array
 dp = np.zeros([npartbase]) #Change in distance per timestep
 vnew_0 = np.zeros([npartbase]) #RMS of velocities
 
@@ -48,35 +53,36 @@ wc = np.zeros([npartbase,2]) #Confirmation of a wall collision
 pc = np.zeros([npartbase,npartbase]) #Confirmation of a particle collision
 pc_vals = np.zeros([npartbase]) #Number of particle collisions
 wc_vals = np.zeros([npartbase]) #Number of wall collisions
-b=0
+iter=0 #Number of iterations 
 
-def wall_coll(i, p,part,npart): #Collisions with the wall function
+def wall_coll(i, p,part,npart = npartbase, iter = iter): #Collisions with the wall function
     global wc
     global wc_vals
-    f_left = max(0,part["radius"] - p[i,0])
-    f_right = max(0,part["radius"]+ p[i,0] - 10*np.sqrt(npart))
-    f_bot = max(0,part["radius"]- p[i,1])
-    f_up = max(0, part["radius"] + p[i,1] - 10*np.sqrt(npart))
+    f_left = max(0,part["radius"] + l[0,0]- p[i,0])
+    f_right = max(0,part["radius"]+ p[i,0] - u[0,0])
+    f_bot = max(0,part["radius"] + l[0,1] - p[i,1])
+    f_up = max(0, part["radius"] + p[i,1] - u[0,1])
     F_C = part["spring"]*np.array([f_left - f_right, f_bot - f_up])
-    if f_left !=0 or f_right !=0: #Left and Right wall collision tracker
+    if iter>n_rec:
+        if f_left !=0 or f_right !=0: #Left and Right wall collision tracker
                 if wc[i,0] == 0:
                     wc[i,0] = 1
                     wc_vals[i] += 1
                     print("side collision",wc_vals)
-    else: 
-        wc[i,0] = 0
-    if f_up != 0 or f_bot !=0: #Top and Bottom wall collision tracker
-                if wc[i,1] == 0:
+        else: 
+            wc[i,0] = 0
+        if f_up != 0 or f_bot !=0: #Top and Bottom wall collision tracker
+            if wc[i,1] == 0:
                     wc[i,1] = 1
                     wc_vals[i] += 1
                     print("top/bottom collision",wc_vals)
-    else: wc[i,1] = 0
-    
+        else: wc[i,1] = 0
+    else: wc_vals[i] = 0
     return F_C
 
 
 
-def particle_coll(i,j,p,part,npart):  #Collisions with other particles function
+def particle_coll(i,j,p,part,npart,iter = iter):  #Collisions with other particles function
     global pc
     global pc_vals
     force = np.array([0,0])
@@ -87,26 +93,28 @@ def particle_coll(i,j,p,part,npart):  #Collisions with other particles function
         d = 0
     if 0 < d < 2*part["radius"]:
         force = part["spring"]*(2*part["radius"] - d)*np.array([np.cos(alpha),np.sin(alpha)])
-    if 0 < d < 2*part["radius"]:
+    if iter>n_rec:
+        if 0 < d < 2*part["radius"]:
                 if pc[i,j] == 0:
                     pc[i,j] = 1
                     pc_vals[i] += 1
                     print("particle collision", pc_vals)
-    else: pc[i,j] == 0
+        else: pc[i,j] == 0
+    else: pc_vals[i] = 0
     return force
 
 
 #print(plistposbase,plistvelbase)
 
-def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,npart=npartbase,dp = dp, vnew_0 = vnew_0,b=b):
+def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,npart=npartbase,dp = dp, vnew_0 = vnew_0,iter = iter):
     F = np.zeros((npart,2))
     Temp = np.zeros(npart)
     for i in range(npart):
         for j in range(i+1, npart):
-            force = particle_coll(i,j,p,part,npart)     
+            force = particle_coll(i,j,p,part,npart,iter = iter)     
             F[i,:] += force
             F[j,:] += -force
-        F_C = wall_coll(i,p,part,npart)
+        F_C = wall_coll(i,p,part,npart,iter = iter)
         F[i,:] += F_C
         F[i,1] += -g
     #print("Forces",F) 
@@ -116,8 +124,8 @@ def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,n
     # Temperature
     for i in range(npart):
         Temp[i] = 0.5*np.sum(vnew[i,:]**2)
-    mean_temp = (1/npart)*np.sum(Temp)
-    if b>n_rec:#print("Temp:", Temp, "Mean Temperature:", mean_temp)
+    mean_temp = np.mean(Temp)
+    if iter>n_rec:
         vnew_0 = np.sqrt((vnew[:,0])**2 +(vnew[:,1])**2)
         dp += vnew_0*h
     else: 
@@ -125,6 +133,7 @@ def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,n
          dp +=vnew_0*h
 
     #print("dp",dp)
+    print(iter)
     
     return(pnew,vnew, Temp, mean_temp, dp)
 
@@ -145,8 +154,8 @@ n_t = 1000
 n_rec = int(n_t/2)
 
 # Animation Loop
-for b in range(n_t):
-    xnext,vnext, Temp, mean_temp,dp=SimulationStep(xnext,vnext,b=b)
+for iter in range(n_t):
+    xnext,vnext, Temp, mean_temp,dp=SimulationStep(xnext,vnext,iter = iter)
     #print(xnext[0][0])
     plpts.set_offsets(xnext)
     plt.pause(0.01)
@@ -159,8 +168,8 @@ mean_path = dp/(1+wc_vals+pc_vals)
 print("path",mean_path)
 check = np.sum(mean_path)/npartbase
 dp_c = np.mean(dp)
-print("dp_c",dp_c)
-print(check)
+print("Average Distance Travelled",dp_c)
+print("mean path per collision", check)
 
 
 
@@ -183,6 +192,8 @@ for j in range(pmax):
     print("standard deviation", sd)
 plt.loglog(N_vals,stand_dev,"*")
 
-plt.show()"""
+plt.show()
 
-#print("Standard Dev", stand_dev)
+#print("Standard Dev", stand_dev)"""
+
+print(densbase)
