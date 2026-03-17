@@ -136,15 +136,11 @@ def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,n
     else: 
          vnew_0 = np.zeros([npartbase])
          dp +=vnew_0*h
-
-    #print("dp",dp)
-    print(iter)
     
     return(pnew,vnew, Temp, mean_temp, dp)
 
 
-#SimulationStep()
-# Create box for particles
+# Create plot for animating the particles
 plt.ion()
 fig=plt.figure()
 ax=fig.add_subplot(111)
@@ -155,13 +151,15 @@ xnext=plistposbase
 vnext=plistvelbase
 input("press enter")
 
+#This is the number of iterations, and n_rec controls when data starts to be recorded
 n_t = 1000
 n_rec = int(n_t/2)
 
 # Animation Loop
 for iter in range(n_t):
+    #Saves the new x and v for the next step, and the temps and path for data collection
     xnext,vnext, Temp, mean_temp,dp=SimulationStep(xnext,vnext,iter = iter)
-    #print(xnext[0][0])
+    #This updates the graph
     plpts.set_offsets(xnext)
     plt.pause(0.01)
     plt.show()
