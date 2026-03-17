@@ -22,16 +22,9 @@ partbase={
 plistposbase=np.zeros((npartbase,2)) # Empty position
 plistvelbase=np.zeros((npartbase,2)) # Empty velocity
 
+# Create arrays of initial velocities and positions for the particles
 for n in range(npartbase):
-    plistposbase[n,:]=([r.random()*boxbase,r.random()*boxbase])
-    if (plistposbase[n,0]<partbase["radius"]):
-        plistposbase[n,0]=partbase["radius"]+plistposbase[n,0]
-    elif(plistposbase[n,0]>boxbase-partbase["radius"]):
-        plistposbase[n,0]=plistposbase[n,0]-partbase["radius"]
-    if (plistposbase[n,1]<partbase["radius"]):
-        plistposbase[n,1]=partbase["radius"]+plistposbase[n,1]
-    elif (plistposbase[n,1]>boxbase-partbase["radius"]):
-        plistposbase[n,1]=plistposbase[n,1]-partbase["radius"]
+    plistposbase[n,:]=([r.random()*boxbase,r.random()*boxbase]) #Initial positions
     plistvelbase[n,:]=([(r.random()-0.5)*2.5,(r.random()-0.5)*2.5]) # Initial Velocities (Originally 2.5)
 
 l = np.array([0,0]) #Coordinates of the bottom left corner of the box
