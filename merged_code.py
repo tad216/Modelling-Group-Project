@@ -5,13 +5,14 @@ import math as m
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import time as t
+import copy as copy
 
 # Set up parameters
-npartbase=32 #Number of particles
+npartbase=128 #Number of particles
 hbase=0.01 # Timestep
 gbase=0 #Gravity (positive values increase gravity)
 def initialiseVariables(npartbase=npartbase):  
-    global boxbase,plistposbase,plistvelbase,partbase,l,u,densbase,colours,Temp,dp,vnew_0,wc,pc,pc_vals,wc_vals,iter
+    global boxbase,plistposbase,plistvelbase,partbase,l,u,densbase,colours,Temp,dp,vnew_0,wc,pc,pc_vals,wc_vals,iter,n_t,n_rec
     boxbase=10*(npartbase**0.5) #Box size
     #Dictionary for constants
     partbase={
@@ -34,7 +35,7 @@ def initialiseVariables(npartbase=npartbase):
     # Give each particle a unique colour
     colours=[]
     for n in range(npartbase):
-        colours.append([r.random(),r.random(),r.random(),1])
+        colours.append([n/npartbase,0,1-n/npartbase,1])
     
     #Here we intitialize all the arrays that we will need for our functions
     Temp = np.zeros(npartbase) #Empty Temperature array
@@ -44,7 +45,9 @@ def initialiseVariables(npartbase=npartbase):
     pc = np.zeros([npartbase,npartbase]) #Confirmation of a particle collision
     pc_vals = np.zeros([npartbase]) #Number of particle collisions
     wc_vals = np.zeros([npartbase]) #Number of wall collisions
-    iter=0 #Number of iterations 
+    iter=0 #Number of iterations
+    n_t = 100
+    n_rec = int(n_t/2)
 
 initialiseVariables() 
 
@@ -67,7 +70,7 @@ def wall_coll(i, p,part,npart = npartbase, iter = iter): #Collisions with the wa
                     #and only ends when there is no collision on the current step.
                     #This ensures that each collision is counted only once.
                     wc_vals[i] += 1
-                    print("side collision",wc_vals)
+                    #print("side collision",wc_vals)
         else: 
             wc[i,0] = 0
         if f_up != 0 or f_bot !=0: #Top and Bottom wall collision tracker
@@ -75,7 +78,7 @@ def wall_coll(i, p,part,npart = npartbase, iter = iter): #Collisions with the wa
                     wc[i,1] = 1
                     #This functions the same as the above if statement
                     wc_vals[i] += 1
-                    print("top/bottom collision",wc_vals)
+                    #print("top/bottom collision",wc_vals)
         else: wc[i,1] = 0
     else: wc_vals[i] = 0
     return F_C
@@ -103,7 +106,7 @@ def particle_coll(i,j,p,part,npart,iter = iter):  #Collisions with other particl
                 if pc[i,j] == 0:
                     pc[i,j] = 1
                     pc_vals[i] += 1
-                    print("particle collision", pc_vals)
+                    #print("particle collision", pc_vals)
         else: pc[i,j] == 0
     else: pc_vals[i] = 0
     return force
@@ -149,7 +152,7 @@ def quicksort(array1, array2, low=0, high=npartbase-1):
 def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,npart=npartbase,dp = dp, vnew_0 = vnew_0,iter = iter):
     action = 0
     #Some local arrays are initiated
-    p = pdistance(p)
+    p = distance(p)
     quicksort(p,v)
     F = np.zeros((npart,2))
     Temp = np.zeros(npart)
@@ -162,12 +165,13 @@ def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,n
                 force = particle_coll(i,j,p,part,npart,iter = iter)     
                 F[i,:] += force
                 F[j,:] += -force
-            F_C = wall_coll(i,p,part,npart,iter = iter)
-            F[i,:] += F_C
+                action += 1
+        F_C = wall_coll(i,p,part,npart,iter = iter)
+        F[i,:] += F_C
             # Includes Gravity
-            F[i,1] += -g
-            action += 1
+        F[i,1] += -g
     # The positions of the particles are changed using the Verlet updating formula 
+    p = antidistance(p) # change p back to base*2 array
     pnew = p + h*v + (h**2)*F
     vnew =(pnew - p)/h
     # Temperature
@@ -182,44 +186,48 @@ def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,n
         dp += vnew_0*h
     else: 
          dp += np.zeros([npartbase])
-    print("action", action)
+    #print("action", action)
+    #print("vnew",vnew)
     
     return(pnew,vnew, Temp, mean_temp, dp,vnew_0)
 
 
 # Create plot for animating the particles
-plt.ion()
-fig=plt.figure()
-ax=fig.add_subplot(111)
-plpts = ax.scatter(*plistposbase.T,c=colours)
-plt.xlim(0,boxbase)
-plt.ylim(0,boxbase)
-xnext=plistposbase
-vnext=plistvelbase
-input("press enter")
+def animation():
+    plt.ion()
+    fig=plt.figure()
+    ax=fig.add_subplot(111)
+    plpts = ax.scatter(*plistposbase.T,c=colours)
+    plt.xlim(0,boxbase)
+    plt.ylim(0,boxbase)
+    xnext=plistposbase
+    vnext=plistvelbase
+    input("press enter")
+    for iter in range(n_t):
+        #Saves the new x and v for the next step, and the temps and path for data collection
+        xnext,vnext, Temp, mean_temp,dp,vnew_0=SimulationStep(xnext,vnext,iter = iter)
+        #This updates the graph
+        plpts.set_offsets(xnext)
+        plt.pause(0.01)
+        plt.show()
 
-#This is the number of iterations, and n_rec controls when data starts to be recorded
-n_t = 1000
-n_rec = int(n_t/2)
-
-# Animation Loop
-for iter in range(n_t):
-    #Saves the new x and v for the next step, and the temps and path for data collection
-    xnext,vnext, Temp, mean_temp,dp,vnew_0=SimulationStep(xnext,vnext,iter = iter)
-    #This updates the graph
-    plpts.set_offsets(xnext)
-    plt.pause(0.01)
-    plt.show()
+def sim(plistposbase = plistposbase, plistvelbase = plistvelbase):
+    for iter in range(n_t):
+        plistposbase, plistvelbase, Temp, mean_temp,dp,vnew_0=SimulationStep(plistposbase,plistvelbase,iter = iter)
+        
 #print(xnext)
 # Imput to space out code
-input("Press enter")
-print("wc", wc_vals,"pc", pc_vals)
-mean_path = dp/(1+wc_vals+pc_vals)
-print("path",mean_path)
-check = np.sum(mean_path)/npartbase
-dp_c = np.mean(dp)
-print("Average Distance Travelled",dp_c)
-print("mean path per collision", check)
+
+def func():
+    print("wc", wc_vals,"pc", pc_vals)
+    mean_path = dp/(1+wc_vals+pc_vals)
+    print("path",mean_path)
+    check = np.sum(mean_path)/npartbase
+    dp_c = np.mean(dp)
+    print("Average Distance Travelled",dp_c)
+    print("mean path per collision", check)
+sim()
+func()
 
 
 
