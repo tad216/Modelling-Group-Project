@@ -182,6 +182,7 @@ def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,n
         dp += vnew_0*h
     else: 
          dp += np.zeros([npartbase])
+    print("action", action)
     
     return(pnew,vnew, Temp, mean_temp, dp,vnew_0)
 
