@@ -147,6 +147,7 @@ def quicksort(array1, array2, low=0, high=npartbase-1):
 
 #This is the function that gets called to perform each step
 def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,npart=npartbase,dp = dp, vnew_0 = vnew_0,iter = iter):
+    action = 0
     #Some local arrays are initiated
     p = pdistance(p)
     quicksort(p,v)
@@ -165,6 +166,7 @@ def SimulationStep(p=plistposbase,v=plistvelbase,h=hbase,part=partbase,g=gbase,n
             F[i,:] += F_C
             # Includes Gravity
             F[i,1] += -g
+            action += 1
     # The positions of the particles are changed using the Verlet updating formula 
     pnew = p + h*v + (h**2)*F
     vnew =(pnew - p)/h
